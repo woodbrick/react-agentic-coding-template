@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@latest"],
+      "autoApprove": []
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "utoo-proxy",
+      "args": [
+        "https://mcpgwoffice-pre.alipay.com/mcpgw/v1/shttpproxy/message/MAIN_CHAIR_mcp.ant.faas.mcpset.Context7",
+        "-t STREAMABLE_HTTP"
+      ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"]
+    }
+  }
+}
