@@ -19,9 +19,10 @@
 - **事件驱动通信**：跨组件交互使用事件机制而非直接引用
 
 #### 3. 业务数据读写规范
-- **组件内直接调用 store 接口**：涉及业务数据操作时，组件直接通过 store 层暴露的接口进行处理
+- **组件内直接调用 store 接口**：涉及业务数据操作时，组件直接通过 store 层暴露的接口进行处理（如使用状态管理库）
 - **避免中间层数据传递**：不通过父组件传递数据，直接通过 store 获取和更新
 - **统一数据源**：所有业务数据统一通过 store 管理，确保数据一致性
+- **灵活的状态管理**：可根据项目需要选择 zustand、Redux、Context API 等状态管理方案
 
 **✅ 正确实践**
 
@@ -124,7 +125,7 @@ const SampleList: React.FC<SampleListProps> = ({ sampleSets, onRefresh, onDelete
 #### 4. 组件命名规范
 - **页面组件**: 采用 `领域+功能` 结构，例如 `LlmSampleManage`
 - **业务组件**: 采用 `功能+组件` 结构，例如 `SampleList`、`SampleUpload`、`SampleTagEditor`
-- **UI组件**: 保持Ant Design规范，例如 `Table`、`Form`、`Button`
+- **UI组件**: 保持所选UI库的命名规范，例如 `Table`、`Form`、`Button`
 
 #### 5. 方法命名规范
 - **查询操作**: `query` 前缀，采用 `query+功能` 结构，例如 `querySampleSets`
@@ -136,24 +137,27 @@ const SampleList: React.FC<SampleListProps> = ({ sampleSets, onRefresh, onDelete
 
 ```
 src/
-├── pages/                 # 应用层 - 页面级组件
+├── pages/                 # 应用层 - 页面级组件（可选）
 │   ├── LlmSampleManage/   # 应用层 - LLM领域+样本管理（文件路径: PascalCase）
 │   │   ├── index.tsx      # 页面主组件
-│   │   ├── index.less     # 页面样式
-│   │   └── components/    # 页面私有组件
+│   │   ├── index.module.css # 页面样式
+│   │   └── components/    # 页面私有组件（可选）
 ├── components/           # 视图层 - 公共组件
 │   ├── BaseComponent/
 │   │   ├── index.tsx     # 组件实现
-│   │   ├── index.md      # 组件文档
-│   │   └── index.test.tsx # 组件测试
-├── stores/              # 状态层 - 业务状态管理
+│   │   ├── index.md      # 组件文档（可选）
+│   │   └── index.test.tsx # 组件测试（可选）
+├── stores/              # 状态层 - 业务状态管理（可选）
 │   ├── LlmSampleStore/  # 状态层 - LLM领域+样本管理（文件路径: PascalCase）
 │   │   ├── index.ts      # 状态实现
 │   │   └── interfaces.ts # 类型定义
-└── services/            # 服务层 - 数据接口
-    ├── LlmSampleService/  # 服务层 - LLM领域+样本管理（文件路径: PascalCase）
-    │   ├── index.ts      # 服务实现
-    │   └── interface.ts  # 类型定义
+├── services/            # 服务层 - 数据接口（可选）
+│   ├── LlmSampleService/  # 服务层 - LLM领域+样本管理（文件路径: PascalCase）
+│   │   ├── index.ts      # 服务实现
+│   │   └── interface.ts  # 类型定义
+├── hooks/               # 自定义Hooks（可选）
+├── utils/               # 工具函数（可选）
+└── types/               # 全局类型定义（可选）
 ```
 
 
@@ -405,58 +409,31 @@ const data = response.data as unknown as SampleSet;  // 避免这种用法
 
 样式实现优先使用tailwind方案，如果特别说明主题需求，才使用样式变量
 
-### 样式变量设计: 
+### 样式变量设计:
 
-1. 在编写组件样式文件时，请参考 src/theme.less 相关的颜色/间距/字号 定义，来使用相关的 css var
-2. 在编写布局样式， 或者如果现有的主题定义中没有包含相关的变量定义，直接硬编码到组件样式文件中
-3. 当一个组件需要支持多主题时，AntD 原生组件通过 ConfigProvider 来实现主题注入，原始 DOM 通过页面级别绑定类名 theme-${主题名称} 来切换 css var 实现
+1. 推荐使用 CSS Modules 或 CSS-in-JS 方案进行组件样式管理
+2. 在编写布局样式时，可以使用 CSS 变量或直接硬编码到组件样式文件中
+3. 当一个组件需要支持多主题时：
+   - 使用 CSS 变量实现主题切换
+   - 通过页面级别绑定类名 `theme-${主题名称}` 来切换样式
+   - 或根据所选UI库的主题系统进行实现
 
 ---
 
-## 框架使用说明
+## 路由和导航规范
 
-### 1. Umi 框架使用规范
-
-#### 核心原则
-
-**绝对禁止在业务代码中直接引用 Umi 相关的能力和 API**。BigFish 已经对 Umi 进行了封装和增强，所有功能都应通过 BigFish 提供的 API 使用。
-
-#### 禁止行为
-
-❌ **禁止导入 Umi 模块**
-
-```typescript
-// 错误示例 - 禁止使用
-import { useParams } from 'umi';
-import { history } from 'umi';
-import { Link } from 'umi';
-```
-
-✅ **正确做法 - 使用 BigFish 封装**
-
-```typescript
-// 正确示例 - 使用 BigFish 提供的能力
-import { useParams } from '@alipay/bigfish';
-import { history } from '@alipay/bigfish';
-import { Link } from '@alipay/bigfish';
-```
-
-### 2. 路由和导航规范
-
-#### 路由相关导入
+### 路由相关导入
 
 ✅ **正确做法**
 
-```typescript
-import { useParams, useLocation, useNavigate } from '@alipay/bigfish';
-import { Link, NavLink } from '@alipay/bigfish';
-import { history } from '@alipay/bigfish';
-```
+根据项目使用的路由系统选择相应的获取方式：
+
+- 使用声明式路由配置的参数获取方式：`import type { Route } from "./+types/team";` 和 `loader({ params }: Route.LoaderArgs)`
+- 使用文件系统路由的参数获取方式
+- 其他路由实现方式：参考相应文档
 
 ❌ **禁止做法**
 
-```typescript
-// 错误示例 - 禁止使用
-import { useParams, useLocation } from 'umi';
-import { Link } from 'react-router-dom';
-```
+- 混用不同路由库的API
+- 直接操作浏览器历史记录而不使用路由系统提供的API
+- 使用 `react-router-dom` 相关的导入和 Hook（项目不使用该库）

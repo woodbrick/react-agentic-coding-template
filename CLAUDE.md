@@ -69,13 +69,14 @@
 
 ### 2.7 默认技术栈
 
-- **框架**: BigFish + React 18
+- **框架**: React 18+
 - **语言**: TypeScript 5.x
-- **UI库**: Ant Design 5.x
+- **UI库**: Shadcn
 - **状态管理**: zustand
-- **构建工具**: Bigfish
-- **测试**: Vitest (Jest已废弃)
-- **样式**: Less + tailwind
+- **路由**: react-router
+- **构建工具**: Vite
+- **测试**: Vitest
+- **样式**: Less、Tailwind CSS
 
 ## 3. 标签系统
 

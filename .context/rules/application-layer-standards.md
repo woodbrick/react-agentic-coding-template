@@ -1,10 +1,10 @@
-<metadata updated="2025-11-03" version="2.2.0" name="应用层规范标准">
-  <keywords>应用层规范, 页面设计, 决策树, 组件拆分, 状态管理, 布局, BigFish, TypeScript, 页面层职责, PageContainer, 面包屑</keywords>
+<metadata updated="2025-11-05" version="3.0.0" name="应用层规范标准">
+  <keywords>应用层规范, 页面设计, 决策树, 组件拆分, 状态管理, 布局, React, TypeScript, 页面层职责</keywords>
 </metadata>
 
 # 📋 应用层规范标准
 
-> 基于 BigFish 框架的应用层开发规范，以**决策为驱动**，**示例为参考**。所有具体实现（代码、配置）统一归集至 `.context/examples/`，本规范仅定义**设计原则与决策逻辑**。
+> 基于React框架的应用层开发规范，以**决策为驱动**，**示例为参考**。所有具体实现（代码、配置）统一归集至 `.context/examples/`，本规范仅定义**设计原则与决策逻辑**。
 
 > ✅ **原则**: 规范说方向，示例给方法
 > ✅ **目标**: 让团队在“该不该做”上达成共识，在“怎么做”上获得标准
@@ -78,13 +78,13 @@
 
 ### 3.1 布局首选方案
 
-- **必须使用 `PageContainer`** 作为页面根容器，提供标准页头、面包屑、边距
-- **禁止** 手动使用 `<div>` 包裹标题、操作按钮（应使用 `header={{ title: '...' }}`）
-- **禁止** 创建3级及以上嵌套容器，所有内容应直接为 `PageContainer` 的子元素
+- **推荐使用页面容器组件**作为页面根容器，提供标准页头、面包屑、边距
+- **禁止** 手动使用 `<div>` 包裹标题、操作按钮（应使用容器组件的配置）
+- **禁止** 创建3级及以上嵌套容器，所有内容应直接为容器组件的子元素
 - **禁止** 附加其他排版样式，保持简洁的容器结构
 
-> ✅ 正确: `<PageContainer><SceneTable /><SceneModal /></PageContainer>`
-> ❌ 错误: `<PageContainer><Space><div><SceneTable /></div></Space></PageContainer>`
+> ✅ 正确: 使用页面容器包裹业务组件
+> ❌ 错误: 创建过深的嵌套结构
 
 #### 3.1.1 模板代码参考
 
@@ -245,55 +245,147 @@ src/pages/{页面名称}/
 
 ### 5.3 路由配置规范
 
-BigFish 项目使用标准的 React Router 路由机制。所有路由配置应统一在 `config/routes.ts` 文件中定义，遵循以下规范: 
+React项目支持多种路由配置方式，所有路由配置应统一在相应配置文件中定义，遵循以下规范:
 
-- 路由路径必须使用**小写+连字符**格式，如: `/model-eval/scene-manage`
-- 动态参数使用冒号语法: `/model-eval/sample-detail/:id`
-- 遵循统一的路由格式: `/model-eval/xxx` 作为所有自动化评测平台路由前缀
+#### 5.3.1 声明式路由配置（推荐）
 
-示例: 
+使用 `app/routes.ts` 进行声明式路由配置，每个路由包含URL模式和模块文件路径：
+
 ```typescript
-// config/routes.ts
-export const routes = [
-  {
-    path: '/model-eval/scene-manage',
-    component: '@/pages/LlmSceneManage',
-  },
-  {
-    path: '/model-eval/sample-detail/:id',
-    component: '@/pages/LlmSampleDetail',
-  },
-];
+import {
+  type RouteConfig,
+  route,
+  index,
+  layout,
+  prefix,
+} from "@react-router/dev/routes";
+
+export default [
+  index("./home.tsx"),
+  route("about", "./about.tsx"),
+
+  layout("./auth/layout.tsx", [
+    route("login", "./auth/login.tsx"),
+    route("register", "./auth/register.tsx"),
+  ]),
+
+  ...prefix("concerts", [
+    index("./concerts/home.tsx"),
+    route(":city", "./concerts/city.tsx"),
+    route("trending", "./concerts/trending.tsx"),
+  ]),
+] satisfies RouteConfig;
 ```
 
-### 5.4 useParams 使用规范
+**关键概念**:
+- **route()**: 定义普通路由
+- **index()**: 定义索引路由（默认子路由）
+- **layout()**: 定义布局路由（不增加URL路径段）
+- **prefix()**: 定义路由前缀（批量添加路径前缀）
 
-在需要获取路由参数时，必须使用 @alipay/bigfish 的 `useParams` Hook，遵循以下规范: 
+#### 5.3.2 路由模块（Route Modules）
 
-- **导入方式**: import { useParams } from '@alipay/bigfish';
+每个路由对应一个模块文件，包含数据加载和渲染逻辑：
+
+```typescript
+// 提供类型安全和推断
+import type { Route } from "./+types/team";
+
+// 数据加载函数
+export async function loader({ params }: Route.LoaderArgs) {
+  let team = await fetchTeam(params.teamId);
+  return { name: team.name };
+}
+
+// 渲染组件
+export default function Component({
+  loaderData,
+}: Route.ComponentProps) {
+  return <h1>{loaderData.name}</h1>;
+}
+```
+
+#### 5.3.3 动态参数
+
+路径段以 `:` 开头时成为动态段：
+
+```typescript
+route("teams/:teamId", "./team.tsx"),
+```
+
+```typescript
+import type { Route } from "./+types/team";
+
+export async function loader({ params }: Route.LoaderArgs) {
+  // params: { teamId: string }
+}
+
+export default function Component({
+  params,
+}: Route.ComponentProps) {
+  params.teamId; // string 类型
+}
+```
+
+#### 5.3.4 可选参数
+
+在段末添加 `?` 可使路由段变为可选：
+
+```typescript
+route(":lang?/categories", "./categories.tsx"),
+route("users/:userId/edit?", "./user.tsx"),
+```
+
+#### 5.3.5 通配符路由
+
+以 `/*` 结尾的通配符路由会匹配所有剩余路径：
+
+```typescript
+route("files/*", "./files.tsx"),
+route("*", "./catchall.tsx"), // 捕获所有未匹配路由
+```
+
+#### 5.3.6 文件系统路由
+
+如需使用文件命名约定，可使用 `@react-router/fs-routes` 包：
+
+```typescript
+import {
+  type RouteConfig,
+  route,
+} from "@react-router/dev/routes";
+import { flatRoutes } from "@react-router/fs-routes";
+
+export default [
+  route("/", "./home.tsx"),
+  ...(await flatRoutes()),
+] satisfies RouteConfig;
+```
+
+> 甚至可以结合不同的路由约定方式。
+
+### 5.4 路由参数获取规范
+
+在需要获取路由参数时，根据项目使用的路由系统选择相应的获取方式，遵循以下规范:
+
+- **参数获取方式**: 根据路由实现方式获取参数
 - **类型安全**: 创建类型接口定义路由参数，确保类型安全
 - **使用规范**: 始终检查参数是否存在，避免空值异常
 - **必须处理**: 参数解析失败的情况（如非数字ID、空值等）
 
-示例: 
+示例:
 ```typescript
-import { useParams } from '@alipay/bigfish';
+// 示例：使用声明式路由配置的参数获取方式
+import type { Route } from "./+types/team";
 
-interface RouteParams {
-  id: string;
+export async function loader({ params }: Route.LoaderArgs) {
+  // params: { teamId: string }
 }
 
-function LlmSampleDetail() {
-  // ✅ 正确: 使用泛型指定参数类型
-  const { id = '' } = useParams<RouteParams>();
-
-  if (!sampleId) {
-    // 处理无效参数的情况
-    return <div>无效的样本ID</div>;
-  }
-
-  // 使用 sampleId 获取数据
-  // ...
+export default function Component({
+  params,
+}: Route.ComponentProps) {
+  params.teamId; // string 类型
 }
 ```
 
