@@ -11,4 +11,16 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    ssrManifest: true,
+    rollupOptions: {
+      input: {
+        main: "./index.html",
+        "ssr-client": "./src/ssr/entry-client.tsx",
+      },
+    },
+  },
+  ssr: {
+    noExternal: ["react", "react-dom", "react-router"],
+  },
 })
