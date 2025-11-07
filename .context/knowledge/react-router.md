@@ -1,17 +1,14 @@
-# React Router 路由使用规范
+<metadata updated="2025-11-07" version="1.0.0" name="React Router 配置指南中文版">
+  <keywords>React Router, 路由配置, 嵌套路由, 动态段, 索引路由, 布局路由</keywords>
+</metadata>
 
-> 本规范适用于基于React Router的前端路由配置，用于指导项目中路由的统一实现方式。
+# React Router 配置指南
 
-## 1. 路由配置基础
+## 配置路由
 
-路由配置通过 `app/routes.ts` 文件进行，每个路由包含两个核心部分：
+路由在 `app/routes.ts` 中配置。每个路由有两个必需部分：用于匹配 URL 的 URL 模式，以及定义其行为的路由模块的文件路径。
 
-- **URL模式**: 匹配URL路径的模式
-- **模块文件路径**: 定义路由行为的组件文件路径
-
-### 基础路由配置示例
-
-```typescript
+```tsx
 import {
   type RouteConfig,
   route,
@@ -19,27 +16,76 @@ import {
 
 export default [
   route("some/path", "./some/file.tsx"),
-  // URL模式 ^           ^ 模块文件
+  // 模式 ^           ^ 模块文件
 ] satisfies RouteConfig;
 ```
 
-## 2. 路由模块（Route Modules）
+以下是一个更大的路由配置示例：
 
-路由模块是定义路由行为的组件文件，包含数据加载、渲染等逻辑。
+```tsx
+import {
+  type RouteConfig,
+  route,
+  index,
+  layout,
+  prefix,
+} from "@react-router/dev/routes";
 
-### 路由模块示例
+export default [
+  index("./home.tsx"),
+  route("about", "./about.tsx"),
 
-```typescript
-// 提供类型安全和推断
+  layout("./auth/layout.tsx", [
+    route("login", "./auth/login.tsx"),
+    route("register", "./auth/register.tsx"),
+  ]),
+
+  ...prefix("concerts", [
+    index("./concerts/home.tsx"),
+    route(":city", "./concerts/city.tsx"),
+    route("trending", "./concerts/trending.tsx"),
+  ]),
+] satisfies RouteConfig;
+```
+
+如果您希望通过文件命名约定而不是配置来定义路由，`@react-router/fs-routes` 包提供了文件系统路由约定。您甚至可以组合不同的路由约定：
+
+```tsx
+import {
+  type RouteConfig,
+  route,
+} from "@react-router/dev/routes";
+import { flatRoutes } from "@react-router/fs-routes";
+
+export default [
+  route("/", "./home.tsx"),
+
+  ...(await flatRoutes()),
+] satisfies RouteConfig;
+```
+
+## 路由模块
+
+`routes.ts` 中引用的文件定义了每个路由的行为：
+
+```tsx
+route("teams/:teamId", "./team.tsx"),
+//           路由模块 ^^^^^^^^
+```
+
+以下是示例路由模块：
+
+```tsx
+// 提供类型安全/推断
 import type { Route } from "./+types/team";
 
-// 数据加载函数
+// 向组件提供 `loaderData`
 export async function loader({ params }: Route.LoaderArgs) {
   let team = await fetchTeam(params.teamId);
   return { name: team.name };
 }
 
-// 渲染组件
+// 在加载器完成后渲染
 export default function Component({
   loaderData,
 }: Route.ComponentProps) {
@@ -47,13 +93,13 @@ export default function Component({
 }
 ```
 
-## 3. 嵌套路由（Nested Routes）
+路由模块具有更多功能，如 actions、headers 和错误边界，但这些将在下一个指南中介绍：路由模块
 
-路由可以嵌套在父路由中，子路由会自动继承父路由的路径。
+## 嵌套路由
 
-### 嵌套路由配置示例
+路由可以嵌套在父路由内部。
 
-```typescript
+```tsx
 import {
   type RouteConfig,
   route,
@@ -70,9 +116,9 @@ export default [
 ] satisfies RouteConfig;
 ```
 
-### 嵌套路由渲染
+父路由的路径自动包含在子路由中，因此此配置创建了 "/dashboard" 和 "/dashboard/settings" URL。
 
-子路由通过父组件中的 `<Outlet />` 组件进行渲染：
+子路由通过父路由中的 `<Outlet/>` 渲染。
 
 ```tsx
 import { Outlet } from "react-router";
@@ -81,24 +127,22 @@ export default function Dashboard() {
   return (
     <div>
       <h1>Dashboard</h1>
-      {/* 将渲染 home.tsx 或 settings.tsx */}
+      {/* 将是 home.tsx 或 settings.tsx */}
       <Outlet />
     </div>
   );
 }
 ```
 
-## 4. 根路由（Root Route）
+## 根路由
 
-所有路由都嵌套在特殊的 `app/root.tsx` 模块中，它是应用程序的根组件。
+`routes.ts` 中的每个路由都嵌套在特殊的 `app/root.tsx` 模块内。
 
-## 5. 布局路由（Layout Routes）
+## 布局路由
 
-布局路由创建子路由的嵌套结构，但不会在URL中添加新的路径段。
+使用 `layout`，布局路由为其子路由创建新的嵌套，但不向 URL 添加任何段。这类似于根路由，但可以在任何级别添加。
 
-### 布局路由配置示例
-
-```typescript
+```tsx
 import {
   type RouteConfig,
   route,
@@ -122,17 +166,20 @@ export default [
 ] satisfies RouteConfig;
 ```
 
-**注意**：
-- `home.tsx` 和 `contact.tsx` 会被渲染到 `marketing/layout.tsx` 的 `<Outlet />` 中，URL路径保持不变
-- `project.tsx` 和 `edit-project.tsx` 会被渲染到 `projects/project-layout.tsx` 的 `<Outlet />` 中，URL路径为 `/projects/:pid` 和 `/projects/:pid/edit`
+请注意：
 
-## 6. 索引路由（Index Routes）
+- `home.tsx` 和 `contact.tsx` 将在不创建任何新 URL 路径的情况下渲染到 `marketing/layout.tsx` 的 outlet 中
+- `project.tsx` 和 `edit-project.tsx` 将在 `/projects/:pid` 和 `/projects/:pid/edit` 处渲染到 `projects/project-layout.tsx` 的 outlet 中，而 `projects/home.tsx` 不会。
 
-索引路由在父路由的URL路径下渲染，相当于默认子路由。
+## 索引路由
 
-### 索引路由配置示例
+```tsx
+index(componentFile),
+```
 
-```typescript
+索引路由在其父路由的 URL 处渲染到其父路由的 Outlet 中（类似于默认子路由）。
+
+```tsx
 import {
   type RouteConfig,
   route,
@@ -140,25 +187,23 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
-  // 渲染到根路由的 <Outlet /> 中，URL为 /
+  // 在 / 处渲染到 root.tsx 的 Outlet 中
   index("./home.tsx"),
   route("dashboard", "./dashboard.tsx", [
-    // 渲染到 dashboard.tsx 的 <Outlet /> 中，URL为 /dashboard
+    // 在 /dashboard 处渲染到 dashboard.tsx 的 Outlet 中
     index("./dashboard-home.tsx"),
     route("settings", "./dashboard-settings.tsx"),
   ]),
 ] satisfies RouteConfig;
 ```
 
-**注意**：索引路由不能有子路由。
+请注意索引路由不能有子路由。
 
-## 7. 路由前缀（Route Prefixes）
+## 路由前缀
 
-使用 `prefix` 可以为一组路由添加路径前缀，而不需要引入父路由。
+使用 `prefix`，您可以为一组路由添加路径前缀，而无需引入父路由。
 
-### 路由前缀配置示例
-
-```typescript
+```tsx
 import {
   type RouteConfig,
   route,
@@ -182,97 +227,110 @@ export default [
 ] satisfies RouteConfig;
 ```
 
-**注意**：
-- `prefix("parent", [route("child1", "./child1.tsx"), route("child2", "./child2.tsx"])`
-- 等价于：`[route("parent/child1", "./child1.tsx"), route("parent/child2", "./child2.tsx")]`
+请注意，这不向路由树引入新路由。而是仅修改其子路由的路径。
 
-## 8. 动态段（Dynamic Segments）
+例如，这两组路由是等效的：
 
-路径段以 `:` 开头时成为动态段，会从URL中解析并作为参数提供给其他路由API。
+```tsx
+// 这种使用 `prefix` 的方式...
+prefix("parent", [
+  route("child1", "./child1.tsx"),
+  route("child2", "./child2.tsx"),
+])
 
-### 动态段配置示例
+// ...等同于：
+[
+  route("parent/child1", "./child1.tsx"),
+  route("parent/child2", "./child2.tsx"),
+]
+```
 
-```typescript
+## 动态段
+
+如果路径段以 `:` 开头，则它成为"动态段"。当路由匹配 URL 时，动态段将从 URL 解析，并作为参数提供给其他路由器 API。
+
+```tsx
 route("teams/:teamId", "./team.tsx"),
 ```
 
-```typescript
+```tsx
 import type { Route } from "./+types/team";
 
 export async function loader({ params }: Route.LoaderArgs) {
-  // params: { teamId: string }
+  //                           ^? { teamId: string }
 }
 
 export default function Component({
   params,
 }: Route.ComponentProps) {
-  params.teamId; // string 类型
+  params.teamId;
+  //        ^ string
 }
 ```
 
-### 多个动态段示例
+您可以在一个路由路径中有多个动态段：
 
-```typescript
+```tsx
 route("c/:categoryId/p/:productId", "./product.tsx"),
 ```
 
-```typescript
-async function loader({ params }: Route.LoaderArgs) {
-  // params: { categoryId: string; productId: string }
+```tsx
+import type { Route } from "./+types/product";
+
+async function loader({ params }: LoaderArgs) {
+  //                    ^? { categoryId: string; productId: string }
 }
 ```
 
-## 9. 可选段（Optional Segments）
+## 可选段
 
-通过在段末添加 `?` 可以使路由段变为可选。
+您可以通过在段末尾添加 `?` 来使路由段变为可选。
 
-### 可选段配置示例
-
-```typescript
+```tsx
 route(":lang?/categories", "./categories.tsx"),
 ```
 
-```typescript
-route("users/:userId/edit?", "./user.tsx"),
+您也可以有可选的静态段：
+
+```tsx
+route("users/:userId/edit?", "./user.tsx");
 ```
 
-## 10. 通配符段（Splats）
+## 通配符段
 
-通配符段（又称"catchall"或"star"段）以 `/*` 结尾，会匹配 `/` 之后的所有字符，包括其他 `/` 字符。
+也称为"catchall"和"star"段。如果路由路径模式以 `/*` 结尾，它将匹配 `/` 后的任何字符，包括其他 `/` 字符。
 
-### 通配符段配置示例
-
-```typescript
+```tsx
 route("files/*", "./files.tsx"),
 ```
 
-```typescript
+```tsx
 export async function loader({ params }: Route.LoaderArgs) {
-  // params["*"] 包含 files/ 之后的所有URL路径
+  // params["*"] 将包含 files/ 后剩余的 URL
 }
 ```
 
-### 解构通配符
+您可以解构 `*`，只需为其分配一个新名称。一个常见的名称是 `splat`：
 
-```typescript
+```tsx
 const { "*": splat } = params;
 ```
 
-### 捕获所有未匹配路由
+您也可以使用通配符来捕获不匹配任何路由的请求：
 
-```typescript
-route("*", "./catchall.tsx"); // 捕获所有未匹配的路由
+```tsx
+route("*", "./catchall.tsx"); // catchall 路由
 ```
 
-```typescript
+```tsx
 export function loader() {
   throw new Response("Page not found", { status: 404 });
 }
 ```
 
-## 11. 组件路由（Component Routes）
+## 组件路由
 
-可以使用组件在组件树的任何位置匹配URL到元素：
+您也可以使用匹配 URL 的组件在组件树中的任何位置渲染元素：
 
 ```tsx
 import { Routes, Route } from "react-router";
@@ -291,27 +349,11 @@ function Wizard() {
 }
 ```
 
-**注意**：这些路由不参与数据加载、动作、代码拆分或其他路由模块功能，适用场景有限。
+请注意，这些路由不参与数据加载、actions、代码分割或任何其他路由模块功能，因此它们的使用场景比路由模块的使用场景更有限。
 
-## 12. 文件系统路由
+下一步：路由模块
 
-如果希望使用文件命名约定而不是显式配置来定义路由，可以使用 `@react-router/fs-routes` 包：
-
-```typescript
-import {
-  type RouteConfig,
-  route,
-} from "@react-router/dev/routes";
-import { flatRoutes } from "@react-router/fs-routes";
-
-export default [
-  route("/", "./home.tsx"),
-  ...(await flatRoutes()),
-] satisfies RouteConfig;
-```
-
-> 甚至可以结合不同的路由约定方式。
-
-<metadata updated="2025-11-05" version="2.0" name="React Router 路由使用规范">
-  <keywords>React Router, 路由配置, 嵌套路由, 动态路由, 前缀路由, 文件系统路由, 路由模块, React</keywords>
-</metadata>
+<reference type="guidance">
+- `.context/knowledge/react-router.md` # 英文原文
+- `technical-solution-routing.md` # 基于此文档的技术方案
+</reference>
