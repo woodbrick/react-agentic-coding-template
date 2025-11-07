@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 export interface AlertItemProps {
   title: string;
