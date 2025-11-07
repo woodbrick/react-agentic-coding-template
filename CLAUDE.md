@@ -73,7 +73,7 @@
 - **语言**: TypeScript 5.x
 - **UI库**: Shadcn
 - **状态管理**: zustand
-- **路由**: react-router
+- **路由**: react-router (禁用 react-router-dom)
 - **构建工具**: Vite
 - **测试**: Vitest
 - **样式**: Less、Tailwind CSS

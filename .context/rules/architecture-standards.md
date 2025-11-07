@@ -28,7 +28,7 @@
 
 ```typescript
 // ✅ 组件内部直接调用 store
-import { useLlmSampleStore } from '@/stores/LlmSampleStore';
+import { useLlmSampleStore } from '@/stores/llm-sample-store';
 
 const SampleList: React.FC = () => {
   const { sampleSets, querySampleSets, deleteSampleSet } = useLlmSampleStore();
@@ -93,66 +93,76 @@ const SampleList: React.FC<SampleListProps> = ({ sampleSets, onRefresh, onDelete
 
 ### 命名规范
 
-项目统一采用**大驼峰命名法 (PascalCase)** 作为目录和文件的命名标准: 
+项目统一采用**烤肉串命名法 (kebab-case)** 作为目录和文件的命名标准:
 
-- **目录命名**: 使用大写字母开头的单词组合，如 `PageConfig`、`UserProfile`
-- **页面命名**: 使用大写字母开头的单词组合，如 `Dashboard`、`PageEditor`
-- **组件命名**: 使用大写字母开头的单词组合，如 `BaseComponent`、`DataTable`
-- **文件命名**: 使用大写字母开头的单词组合，如 `PageService.ts`、`UserInterface.ts`
+- **目录命名**: 使用小写字母和连字符的组合，如 `page-config`、`user-profile`
+- **页面命名**: 使用小写字母和连字符的组合，如 `dashboard`、`page-editor`
+- **组件命名**: 使用小写字母和连字符的组合，如 `base-component`、`data-table`
+- **文件命名**: 使用小写字母和连字符的组合，如 `page-service.ts`、`user-interface.ts`
 
 ### 详细命名约定
 
-为了确保代码的精确性和可维护性，所有命名必须遵循**领域+功能+类型**的精确命名模式，避免使用如 `DataManagement` 这样笼统、模糊的命名: 
+为了确保代码的精确性和可维护性，所有命名必须遵循**领域-功能-类型**的精确命名模式，避免使用如 `data-management` 这样笼统、模糊的命名:
+
+#### 命名场景区分
+
+不同场景采用不同的命名规范，需严格区分：
+
+- **文件和目录路径**: 使用 `kebab-case`，如 `llm-sample-manage/index.tsx`
+- **React 组件名**: 使用 `PascalCase`，如 `const SampleList: React.FC`
+- **TypeScript 接口/类型**: 使用 `PascalCase`，如 `interface SampleSet`、`type QueryResult`
+- **React Hook**: 使用 `camelCase` + `use` 前缀，如 `useLlmSampleStore`
+- **函数/变量名**: 使用 `camelCase`，如 `querySampleSets`、`deleteSampleSet`
+- **CSS 类名**: 使用 Tailwind 原子类，如 `className="flex items-center justify-between"` 
 
 #### 1. 文件命名规范
-- **页面组件文件**: 使用 `PascalCase`，采用 `领域+功能` 结构，例如 `LlmSampleManage`（LLM领域+样本管理）而不是 `DataManagement`
-- **服务文件**: 使用 `PascalCase`，采用 `领域+功能+Service` 结构，例如 `LlmSampleService`
-- **状态文件**: 使用 `PascalCase`，采用 `领域+功能+Store` 结构，例如 `LlmSampleStore`
+- **页面组件文件**: 使用 `kebab-case`，采用 `领域-功能` 结构，例如 `llm-sample-manage`（LLM领域-样本管理）而不是 `data-management`
+- **服务文件**: 使用 `kebab-case`，采用 `领域-功能-service` 结构，例如 `llm-sample-service`
+- **状态文件**: 使用 `kebab-case`，采用 `领域-功能-store` 结构，例如 `llm-sample-store`
 - **类型定义文件**: 使用小写，例如 `interfaces.ts`、`types.ts`
 
 #### 2. 页面路径规范
 - **访问路径**: 使用 RESTful 风格的 **小写+连字符** 格式，如 `/llm/sample/manage`，注册在 config/routes.ts
-- **文件路径**: 使用 `PascalCase`，例如 `/src/pages/LlmSampleManage`，体现领域+功能
-- **路由配置**: 使用 `PascalCase`，例如 `LlmSampleManage`，与文件路径保持一致
+- **文件路径**: 使用 `kebab-case`，例如 `/src/pages/llm-sample-manage`，体现领域-功能
+- **路由配置**: 使用 `kebab-case`，例如 `llm-sample-manage`，与文件路径保持一致
 
-> 📌 **路由映射说明**: 访问路径 `/llm/sample/manage` 对应路由配置 `LlmSampleManage`，在 `src/config/routes.ts` 中通过配置实现映射，前端路由地址为 RESTful 格式，后端代码标识为 PascalCase，两者解耦但语义一致。
+> 📌 **路由映射说明**: 访问路径 `/llm/sample/manage` 对应路由配置 `llm-sample-manage`，在 `src/config/routes.ts` 中通过配置实现映射，前端路由地址为 RESTful 格式，后端代码标识为 kebab-case，两者保持语义一致。
 
 #### 3. 接口定义规范
-- **服务接口**: 使用业务语义，采用 `功能+Service` 结构，例如 `LlmSampleService` 而不是 `IDataService`
-- **请求/响应类型**: 使用 `Request`/`Response` 后缀，采用 `功能+Request/Response` 结构，例如 `QuerySampleSetsRequest`
-- **业务实体**: 使用清晰业务名称，采用 `领域+实体` 结构，例如 `SampleSet`、`SampleTag`
+- **服务接口**: 使用业务语义，采用 `功能-service` 结构，例如 `llm-sample-service` 而不是 `i-data-service`
+- **请求/响应类型**: 使用 `Request`/`Response` 后缀，采用 `功能-request/response` 结构，例如 `query-sample-sets-request`
+- **业务实体**: 使用清晰业务名称，采用 `领域-实体` 结构，例如 `sample-set`、`sample-tag`
 
 #### 4. 组件命名规范
-- **页面组件**: 采用 `领域+功能` 结构，例如 `LlmSampleManage`
-- **业务组件**: 采用 `功能+组件` 结构，例如 `SampleList`、`SampleUpload`、`SampleTagEditor`
-- **UI组件**: 保持所选UI库的命名规范，例如 `Table`、`Form`、`Button`
+- **页面组件**: 采用 `领域-功能` 结构，例如 `llm-sample-manage`
+- **业务组件**: 采用 `功能-组件` 结构，例如 `sample-list`、`sample-upload`、`sample-tag-editor`
+- **UI组件**: 保持所选UI库的命名规范，例如 `table`、`form`、`button`
 
 #### 5. 方法命名规范
-- **查询操作**: `query` 前缀，采用 `query+功能` 结构，例如 `querySampleSets`
-- **创建操作**: `create` 前缀，采用 `create+功能` 结构，例如 `createSampleSet`
-- **更新操作**: `update` 前缀，采用 `update+功能` 结构，例如 `updateSampleSet`
-- **删除操作**: `delete` 前缀，采用 `delete+功能` 结构，例如 `deleteSampleSet`
+- **查询操作**: `query` 前缀，采用 `query-功能` 结构，例如 `query-sample-sets`
+- **创建操作**: `create` 前缀，采用 `create-功能` 结构，例如 `create-sample-set`
+- **更新操作**: `update` 前缀，采用 `update-功能` 结构，例如 `update-sample-set`
+- **删除操作**: `delete` 前缀，采用 `delete-功能` 结构，例如 `delete-sample-set`
 
 ### 目录结构规范
 
 ```
 src/
 ├── pages/                 # 应用层 - 页面级组件（可选）
-│   ├── LlmSampleManage/   # 应用层 - LLM领域+样本管理（文件路径: PascalCase）
+│   ├── llm-sample-manage/   # 应用层 - LLM领域-样本管理（文件路径: kebab-case）
 │   │   ├── index.tsx      # 页面主组件
-│   │   ├── index.module.css # 页面样式
 │   │   └── components/    # 页面私有组件（可选）
 ├── components/           # 视图层 - 公共组件
-│   ├── BaseComponent/
+│   ├── base-component/
 │   │   ├── index.tsx     # 组件实现
 │   │   ├── index.md      # 组件文档（可选）
 │   │   └── index.test.tsx # 组件测试（可选）
 ├── stores/              # 状态层 - 业务状态管理（可选）
-│   ├── LlmSampleStore/  # 状态层 - LLM领域+样本管理（文件路径: PascalCase）
+│   ├── llm-sample-store/  # 状态层 - LLM领域-样本管理（文件路径: kebab-case）
 │   │   ├── index.ts      # 状态实现
 │   │   └── interfaces.ts # 类型定义
 ├── services/            # 服务层 - 数据接口（可选）
-│   ├── LlmSampleService/  # 服务层 - LLM领域+样本管理（文件路径: PascalCase）
+│   ├── llm-sample-service/  # 服务层 - LLM领域-样本管理（文件路径: kebab-case）
 │   │   ├── index.ts      # 服务实现
 │   │   └── interface.ts  # 类型定义
 ├── hooks/               # 自定义Hooks（可选）
@@ -324,8 +334,8 @@ function processComplexOrder(order: Order): ProcessResult {
 
 ```typescript
 // ✅ 正确示例 - 直接使用服务层导出类型
-import type { SampleSet } from '@/services/LlmSampleManage/interface';
-import type { QueryResult } from '@/services/LlmSampleManage/interface';
+import type { SampleSet } from '@/services/llm-sample-manage/interface';
+import type { QueryResult } from '@/services/llm-sample-manage/interface';
 
 // ✅ 状态层使用服务层类型
 export interface LlmSampleManageState {
@@ -407,16 +417,18 @@ const data = response.data as unknown as SampleSet;  // 避免这种用法
 
 ## 样式研发
 
-样式实现优先使用tailwind方案，如果特别说明主题需求，才使用样式变量
+样式实现完全遵循 Tailwind CSS 方案，所有样式通过 Tailwind 类名实现
 
-### 样式变量设计:
+### 样式实现规范:
 
-1. 推荐使用 CSS Modules 或 CSS-in-JS 方案进行组件样式管理
-2. 在编写布局样式时，可以使用 CSS 变量或直接硬编码到组件样式文件中
-3. 当一个组件需要支持多主题时：
-   - 使用 CSS 变量实现主题切换
-   - 通过页面级别绑定类名 `theme-${主题名称}` 来切换样式
-   - 或根据所选UI库的主题系统进行实现
+1. **强制使用 Tailwind CSS**: 所有样式通过 Tailwind 原子类实现，禁止使用 CSS Modules 或 CSS-in-JS 方案
+2. **样式定义**: 直接在组件中使用 className 属性，通过 Tailwind 类名定义样式
+3. **主题支持**:
+   - 使用 Tailwind 内置的主题系统进行配置
+   - 通过 tailwind.config.js 文件扩展自定义主题
+   - 利用 Tailwind 的 variant 前缀实现状态样式
+4. **响应式设计**: 使用 Tailwind 响应式前缀实现，如 `md:`, `lg:`, `xl:`
+5. **自定义样式**: 仅有在 Tailwind 无法满足的特殊需求时，才考虑扩展 Tailwind 配置
 
 ---
 

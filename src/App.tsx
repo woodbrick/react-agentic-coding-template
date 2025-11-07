@@ -15,7 +15,7 @@ interface AlertData {
   icon: React.ReactNode;
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function App({ children }: { children: React.ReactNode }) {
   // 受控状态：管理告警项数据
   const [alerts] = useState<AlertData[]>([
     {
