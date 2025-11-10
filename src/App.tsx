@@ -37,7 +37,7 @@ export default function App() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarTrigger />
-      <main className="p-6">
+      <main className="w-full">
         <Outlet />
         {/* 循环渲染告警项 */}
         {alerts.map((alert, index) => (
